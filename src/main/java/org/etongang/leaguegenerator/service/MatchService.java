@@ -2,13 +2,12 @@ package org.etongang.leaguegenerator.service;
 
 import org.etongang.leaguegenerator.domain.DoublesGame;
 import org.etongang.leaguegenerator.domain.DoublesPair;
+import org.etongang.leaguegenerator.domain.MatchGame;
 import org.etongang.leaguegenerator.domain.SinglePlayer;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Queue;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -23,9 +22,6 @@ public class MatchService {
                 uniquePairing.add(new DoublesPair(pairingId++, new SinglePlayer(i, allPlayers.get(i - 1)), new SinglePlayer(j, allPlayers.get(j - 1))));
             }
         }
-
-        //TODO shuffle trips unique pairing intermittently
-        Collections.shuffle(uniquePairing);
 
         return uniquePairing;
     }
@@ -58,7 +54,7 @@ public class MatchService {
             if (numberOfPlayers % 4 == 0 && totalMatches != numberOfPlayers - 1) {
                 throw new RuntimeException(String.format("Retry, player:%d has %d games. Expected count is:%d ", count, totalMatches, numberOfPlayers - 1));
             }
-            stringBuilder.append(String.format("<tr><td> %S </td><td>%d</td></tr>", allPlayersList.get(count-1), totalMatches));
+            stringBuilder.append(String.format("<tr><td> %S </td><td>%d</td></tr>", allPlayersList.get(count - 1), totalMatches));
 
         }
 
@@ -87,13 +83,15 @@ public class MatchService {
                         || x.getDoublesPairTwo().equals(doublesPair));
     }
 
-    public String displayRow(DoublesGame game, int count, String player) {
+    public String displayRow(DoublesGame game, int count, int matchCount, String player) {
 
 
-        return String.format("<td>Match:%s</td>  <td>%s/%s vs -%s/%s</td><td>%s</td>",
+        return String.format("<td>Match:%s</td><td>%s/%s vs %s/%s</td><td>%s</td><td>%s</td>",
                 count,
                 game.getDoublesPairOne().getSinglePlayerOne().getName(), game.getDoublesPairOne().getSinglePlayerTwo().getName(),
-                game.getDoublesPairTwo().getSinglePlayerOne().getName(), game.getDoublesPairTwo().getSinglePlayerTwo().getName(), player);
+                game.getDoublesPairTwo().getSinglePlayerOne().getName(), game.getDoublesPairTwo().getSinglePlayerTwo().getName(),
+                player,
+                matchCount % 2 == 0 ? "Red" : "Blue");
     }
 
     public String getMatchRow(List<DoublesGame> doublesGames, Queue<String> allPlayersQueue) {
@@ -103,7 +101,7 @@ public class MatchService {
         AtomicInteger count = new AtomicInteger(1);
         doublesGames.forEach(x -> {
             player.set(count.get() % 2 == 0 ? player.get() : getPlayerFromPool(allPlayersQueue));
-            stringBuffer.append("<tr>").append(displayRow(x, count.getAndIncrement(), player.get())).append("</tr>");
+            stringBuffer.append("<tr>").append(displayRow(x, count.getAndIncrement(), count.get(), player.get())).append("</tr>");
 
         });
         return stringBuffer.toString();
@@ -119,4 +117,99 @@ public class MatchService {
         return player;
     }
 
+    public List<MatchGame> generateUniqueMatchDays(List<DoublesGame> doublesMatches, LocalDate startDate) {
+        LocalDate dt = startDate;
+
+        List<MatchGame> matchGames = new ArrayList<>();
+        for (int i = 0, j = doublesMatches.size() - 1; i <= j; i++, j--) {
+
+            DoublesGame doublesGame1 = doublesMatches.get(i);
+
+            DoublesGame doublesGame2 = findEligibleMatchDayPair(doublesGame1, doublesMatches, matchGames);
+            if (doublesGame2 == null) {
+                throw new RuntimeException("cannot find eligible 2nd doubles game for " + doublesGame1);
+            }
+            MatchGame matchGame = new MatchGame(dt, doublesGame1, doublesGame2);
+            matchGames.add(matchGame);
+            dt = dt.plusWeeks(1);
+        }
+
+
+        return matchGames;
+    }
+
+    private DoublesGame findEligibleMatchDayPair(DoublesGame doublesGame1, List<DoublesGame> doublesGames, List<MatchGame> matchGames) {
+
+        for (DoublesGame doublesGame2 : doublesGames) {
+            if (isContains(matchGames, doublesGame2) || doublesGame2.equals(doublesGame1))
+                continue;
+            if (isMatchDayAllowed(doublesGame1, doublesGame2)) {
+                return doublesGame2;
+            }
+        }
+
+
+        return null;
+    }
+
+    private boolean isContains(List<MatchGame> matchGames, DoublesGame doublesGame2) {
+        return matchGames.stream().anyMatch(x -> x.getDoublesGameFirst().equals(doublesGame2) || x.getDoublesGameSecond().equals(doublesGame2));
+
+    }
+
+    private boolean isMatchDayAllowed(DoublesGame doublesGameFirst, DoublesGame doublesGameSecond) {
+
+
+        Set<SinglePlayer> singlePlayers = new HashSet<>();
+
+
+        //1st Player is part of 2nd Doubles Game
+        SinglePlayer player1Match1 = doublesGameFirst.getDoublesPairOne().getSinglePlayerOne();
+        SinglePlayer player2Match1 = doublesGameFirst.getDoublesPairOne().getSinglePlayerTwo();
+
+        //2nd Player is part of 2nd Doubles Game
+        SinglePlayer player3Match1 = doublesGameFirst.getDoublesPairTwo().getSinglePlayerOne();
+        SinglePlayer player4Match1 = doublesGameFirst.getDoublesPairTwo().getSinglePlayerTwo();
+
+        //1st Player is part of 2nd Doubles Game
+        SinglePlayer player1Match2 = doublesGameSecond.getDoublesPairOne().getSinglePlayerOne();
+        SinglePlayer player2Match2 = doublesGameSecond.getDoublesPairOne().getSinglePlayerTwo();
+
+        //1st Player is part of 2nd Doubles Game
+        SinglePlayer player3Match2 = doublesGameSecond.getDoublesPairTwo().getSinglePlayerOne();
+        SinglePlayer player4Match2 = doublesGameSecond.getDoublesPairTwo().getSinglePlayerTwo();
+
+        singlePlayers.add(player1Match1);
+        singlePlayers.add(player2Match1);
+        singlePlayers.add(player3Match1);
+        singlePlayers.add(player4Match1);
+        singlePlayers.add(player1Match2);
+        singlePlayers.add(player2Match2);
+        singlePlayers.add(player3Match2);
+        singlePlayers.add(player4Match2);
+
+        return singlePlayers.size() == 8;
+
+    }
+
+    public String getMatchDaysRow(List<MatchGame> matchGames, Queue<String> allPlayersQueue) {
+        StringBuilder stringBuffer = new StringBuilder();
+        AtomicInteger count = new AtomicInteger(1);
+        AtomicInteger matchCount = new AtomicInteger(1);
+        AtomicReference<String> owner1 = new AtomicReference<>(getPlayerFromPool(allPlayersQueue));
+        AtomicReference<String> owner2 = new AtomicReference<>(getPlayerFromPool(allPlayersQueue));
+        matchGames.forEach(matchGame -> {
+
+            owner1.set(matchCount.get() % 2 == 0 ? getPlayerFromPool(allPlayersQueue) : owner1.get());
+            owner2.set(matchCount.get() % 2 == 0 ? getPlayerFromPool(allPlayersQueue) : owner2.get());
+            stringBuffer.append("<tr><th>")
+                    .append(matchGame.getDate()).append("</th>")
+                    .append(displayRow(matchGame.getDoublesGameFirst(), count.getAndIncrement(), matchCount.get(), owner1.get()))
+                    .append(displayRow(matchGame.getDoublesGameSecond(), count.getAndIncrement(), matchCount.get(), owner2.get()))
+                    .append("</tr>");
+
+            matchCount.getAndIncrement();
+        });
+        return stringBuffer.toString();
+    }
 }
