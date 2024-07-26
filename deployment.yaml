@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: leaguegenerator
+  name: leaguegenerator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leaguegenerator
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: leaguegenerator
+    spec:
+      containers:
+      - image: auniyal/ckad:leaguegenerator
+        name: leaguegenerator
+        resources: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: leaguegenerator
+  name: leaguegenerator
+spec:
+  ports:
+  - name: 8080-8080
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: leaguegenerator
+  type: ClusterIP
