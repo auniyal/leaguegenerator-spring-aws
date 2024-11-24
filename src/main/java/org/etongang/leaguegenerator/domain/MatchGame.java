@@ -16,4 +16,6 @@ public class MatchGame {
     LocalDate date;
     DoublesGame doublesGameFirst;
     DoublesGame doublesGameSecond;
+
+
 }

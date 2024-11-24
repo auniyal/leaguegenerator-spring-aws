@@ -54,7 +54,8 @@ public class MatchService {
             if (numberOfPlayers % 4 == 0 && totalMatches != numberOfPlayers - 1) {
                 throw new RuntimeException(String.format("Retry, player:%d has %d games. Expected count is:%d ", count, totalMatches, numberOfPlayers - 1));
             }
-            stringBuilder.append(String.format("<tr><td> %S </td><td>%d</td></tr>", allPlayersList.get(count - 1), totalMatches));
+            stringBuilder.append(String.format("%S: %d", allPlayersList.get(count - 1), totalMatches));
+            stringBuilder.append("\n");
 
         }
 

@@ -7,11 +7,7 @@ import java.util.List;
 
 @Data
 public class UserInput {
-
-   private int numberOfPlayer;
-
     private List<String> players;
     private boolean full;
-
     private LocalDate startDate;
 }

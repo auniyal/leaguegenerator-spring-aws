@@ -2,10 +2,11 @@ package org.etongang.leaguegenerator.response;
 
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 public class PlayerData {
-   private String  date;
-    private int matchNo;
-    private String player;
-    private String surface;
+   List<PlayerDataRow> playerDataRow = new ArrayList<>();
+   String validation;
 }
