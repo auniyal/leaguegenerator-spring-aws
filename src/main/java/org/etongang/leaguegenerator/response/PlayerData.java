@@ -7,6 +7,6 @@ import java.util.List;
 
 @Data
 public class PlayerData {
-   List<PlayerDataRow> playerDataRow = new ArrayList<>();
-   String validation;
+   List<PlayerDataRow> playerDataRows = new ArrayList<>();
+  // String validation;
 }

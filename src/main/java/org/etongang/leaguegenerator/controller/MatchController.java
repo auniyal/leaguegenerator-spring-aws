@@ -1,5 +1,6 @@
 package org.etongang.leaguegenerator.controller;
 
+import jakarta.ws.rs.POST;
 import org.etongang.leaguegenerator.HtmlContent;
 import org.etongang.leaguegenerator.domain.DoublesGame;
 import org.etongang.leaguegenerator.domain.DoublesPair;
@@ -66,7 +67,8 @@ public class MatchController {
 
     }
 
-    @GetMapping(value = "/v2/api/match/{numberOfPlayer}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @CrossOrigin(origins = "http://localhost:3000")
+    @PostMapping(value = "/v2/api/match/{numberOfPlayer}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public PlayerData generateMatches(@PathVariable int numberOfPlayer,
                                       @RequestBody UserInput userInput) {
@@ -95,12 +97,12 @@ public class MatchController {
         matchGames.forEach(matchGame -> {
 //                    PlayerDataRow playerDataRow = getPlayerDataRow(matchGame.getDoublesGameFirst(), atomicInteger);
 //            PlayerDataRow playerDataRow = getPlayerDataRow(matchGame.getDoublesGameFirst(), atomicInteger);
-                    playerData.getPlayerDataRow().add(getPlayerDataRow(matchGame.getDoublesGameFirst(), matchGame.getDate(), atomicInteger));
-                    playerData.getPlayerDataRow().add(getPlayerDataRow(matchGame.getDoublesGameSecond(), matchGame.getDate(), atomicInteger));
+                    playerData.getPlayerDataRows().add(getPlayerDataRow(matchGame.getDoublesGameFirst(), matchGame.getDate(), atomicInteger));
+                    playerData.getPlayerDataRows().add(getPlayerDataRow(matchGame.getDoublesGameSecond(), matchGame.getDate(), atomicInteger));
                 }
         );
 
-        playerData.setValidation(matchService.validateGeneratedMatchesCounts(playersProvided, doublesMatches, allPlayersList));
+       // playerData.setValidation(matchService.validateGeneratedMatchesCounts(playersProvided, doublesMatches, allPlayersList));
         return playerData;
 
     }
