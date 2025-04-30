@@ -13,7 +13,7 @@ public class DoublesGame {
 
     @Override
     public String toString() {
-        return String.format("%s-%s / %s-%s",
+        return String.format("%s/%s vs %s/%s",
                 doublesPairOne.getSinglePlayerOne().getName(),
                 doublesPairOne.getSinglePlayerTwo().getName(),
                 doublesPairTwo.getSinglePlayerOne().getName(),

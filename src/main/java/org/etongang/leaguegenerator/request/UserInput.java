@@ -10,4 +10,5 @@ public class UserInput {
     private List<String> players;
     private boolean full;
     private LocalDate startDate;
+    private List<String> surface;
 }

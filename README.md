@@ -6,4 +6,3 @@ How to use this tool
 API Gateway
 Lambda Funtion 
 Sprint-boot app
-AWS SAM

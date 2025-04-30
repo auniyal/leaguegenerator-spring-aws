@@ -67,7 +67,7 @@ public class MatchController {
 
     }
 
-    @CrossOrigin(origins = "http://localhost:3000")
+    @CrossOrigin(origins = "http://localhost:5173")
     @PostMapping(value = "/v2/api/match/{numberOfPlayer}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public PlayerData generateMatches(@PathVariable int numberOfPlayer,
@@ -90,29 +90,29 @@ public class MatchController {
         if (isFull) {
             matchGames = matchService.generateUniqueMatchDays(doublesMatches, userInput.getStartDate());
         }
-
+        String surface1 = userInput.getSurface().stream().findFirst().get();
+        String surface2 = userInput.getSurface().size() == 1 ? surface1 : userInput.getSurface().get(1);
         PlayerData playerData = new PlayerData();
         AtomicInteger atomicInteger = new AtomicInteger(1);
-
+        AtomicInteger atomicCount = new AtomicInteger(1);
         matchGames.forEach(matchGame -> {
-//                    PlayerDataRow playerDataRow = getPlayerDataRow(matchGame.getDoublesGameFirst(), atomicInteger);
-//            PlayerDataRow playerDataRow = getPlayerDataRow(matchGame.getDoublesGameFirst(), atomicInteger);
-                    playerData.getPlayerDataRows().add(getPlayerDataRow(matchGame.getDoublesGameFirst(), matchGame.getDate(), atomicInteger));
-                    playerData.getPlayerDataRows().add(getPlayerDataRow(matchGame.getDoublesGameSecond(), matchGame.getDate(), atomicInteger));
+                    playerData.getPlayerDataRows().add(getPlayerDataRow(matchGame.getDoublesGameFirst(), matchGame.getDate(), atomicInteger, (atomicCount.get() % 2 == 0) ? surface1 : surface2));
+                    playerData.getPlayerDataRows().add(getPlayerDataRow(matchGame.getDoublesGameSecond(), matchGame.getDate(), atomicInteger, (atomicCount.get() % 2 == 0) ? surface1 : surface2));
+                    atomicCount.getAndIncrement();
                 }
         );
 
-       // playerData.setValidation(matchService.validateGeneratedMatchesCounts(playersProvided, doublesMatches, allPlayersList));
+        // playerData.setValidation(matchService.validateGeneratedMatchesCounts(playersProvided, doublesMatches, allPlayersList));
         return playerData;
 
     }
 
-    private static PlayerDataRow getPlayerDataRow(DoublesGame doublesGame, LocalDate date, AtomicInteger atomicInteger) {
+    private static PlayerDataRow getPlayerDataRow(DoublesGame doublesGame, LocalDate date, AtomicInteger atomicInteger, String surface) {
         PlayerDataRow playerDataRow = new PlayerDataRow();
         playerDataRow.setPlayer(doublesGame.toString());
         playerDataRow.setDate(date.toString());
         playerDataRow.setMatchNo(atomicInteger.getAndIncrement());
-        playerDataRow.setSurface("CLAY");
+        playerDataRow.setSurface(surface);
         return playerDataRow;
     }
 
