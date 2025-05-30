@@ -118,31 +118,86 @@ public class MatchService {
         return player;
     }
 
-    public List<MatchGame> generateUniqueMatchDays(List<DoublesGame> doublesMatches, LocalDate startDate) {
+    public List<MatchGame> generateUniqueMatchDays(List<DoublesGame> doublesMatches, LocalDate startDate, int numberOfMatchesADay, int noOfPlayers) {
         LocalDate dt = startDate;
-
+        boolean twoGameMathDay = noOfPlayers >= 8;
         List<MatchGame> matchGames = new ArrayList<>();
-        for (int i = 0, j = doublesMatches.size() - 1; i <= j; i++, j--) {
+        if (!twoGameMathDay) {
 
-            DoublesGame doublesGame1 = doublesMatches.get(i);
+            for (int i = 0; i <= doublesMatches.size() - 1; i++) {
 
-            DoublesGame doublesGame2 = findEligibleMatchDayPair(doublesGame1, doublesMatches, matchGames);
-            if (doublesGame2 == null) {
-                throw new RuntimeException("cannot find eligible 2nd doubles game for " + doublesGame1);
+                DoublesGame doublesGame1 = doublesMatches.get(i);
+
+                MatchGame matchGame = new MatchGame(dt, doublesGame1, null);
+                if (!(numberOfMatchesADay == 1)) {
+                    dt = dt.plusWeeks(1);
+                }
+                matchGames.add(matchGame);
+
             }
-            MatchGame matchGame = new MatchGame(dt, doublesGame1, doublesGame2);
-            matchGames.add(matchGame);
-            dt = dt.plusWeeks(1);
+            return matchGames;
+        } else {
+
+            for (int i = 0, j = doublesMatches.size() - 1; i <= j; i++, j--) {
+
+                DoublesGame doublesGame1 = doublesMatches.get(i);
+                DoublesGame doublesGame2 = findEligibleMatchDayPair(doublesGame1, doublesMatches, matchGames, true);
+
+                if (doublesGame2 == null) {
+                    throw new RuntimeException("cannot find eligible 2nd doubles game for " + doublesGame1);
+                }
+                MatchGame matchGame = new MatchGame(dt, doublesGame1, doublesGame2);
+                matchGames.add(matchGame);
+                dt = dt.plusWeeks(1);
+            }
+
+
+            return matchGames;
         }
-
-
-        return matchGames;
     }
+//    public List<MatchGame> generateUniqueMatchDays(List<DoublesGame> doublesMatches, LocalDate startDate, int numberOfMatchesADay, int noOfPlayers) {
+//        LocalDate dt = startDate;
+//        boolean isWeekly= numberOfMatchesADay!=1;
+//        boolean twoGameMathDay= noOfPlayers>=8;
+//
+//        List<MatchGame> matchGames = new ArrayList<>();
+//       for (int i = 0; i <= doublesMatches.size()-1 ;  i++) {
+//
+//            DoublesGame doublesGame1 = doublesMatches.get(i);
+//            DoublesGame doublesGame2 =
+//                    twoGameMathDay? findEligibleMatchDayPair(doublesGame1, doublesMatches, matchGames,isWeekly):null;
+//
 
-    private DoublesGame findEligibleMatchDayPair(DoublesGame doublesGame1, List<DoublesGame> doublesGames, List<MatchGame> matchGames) {
+    /// /            if (twoGameMathDay && doublesGame2 == null) {
+    /// /                throw new RuntimeException("cannot find eligible 2nd doubles game for " + doublesGame1);
+    /// /            }
+//
+//            MatchGame matchGame = new MatchGame(dt, doublesGame1,isWeekly? doublesGame2:null);
+//
+//            matchGames.add(matchGame);
+//
+//            if (!(numberOfMatchesADay == 1)) {
+//                dt = dt.plusWeeks(1);
+//            }
+//        }
+
+//        for (int i = 0; i <= doublesMatches.size()-1 ;  i++) {
+//
+//            DoublesGame doublesGame1 = doublesMatches.get(i);
+//
+//            MatchGame matchGame = new MatchGame(dt, doublesGame1,null);
+//            if(!(numberOfMatchesADay==1)){
+//                dt = dt.plusWeeks(1);
+//            }
+//            matchGames.add(matchGame);
+//
+//        }
+//        return matchGames;
+//    }
+    private DoublesGame findEligibleMatchDayPair(DoublesGame doublesGame1, List<DoublesGame> doublesGames, List<MatchGame> matchGames, boolean isWeekly) {
 
         for (DoublesGame doublesGame2 : doublesGames) {
-            if (isContains(matchGames, doublesGame2) || doublesGame2.equals(doublesGame1))
+            if (isContains(matchGames, doublesGame2, isWeekly) || doublesGame2.equals(doublesGame1))
                 continue;
             if (isMatchDayAllowed(doublesGame1, doublesGame2)) {
                 return doublesGame2;
@@ -153,7 +208,7 @@ public class MatchService {
         return null;
     }
 
-    private boolean isContains(List<MatchGame> matchGames, DoublesGame doublesGame2) {
+    private boolean isContains(List<MatchGame> matchGames, DoublesGame doublesGame2, boolean isWeekly) {
         return matchGames.stream().anyMatch(x -> x.getDoublesGameFirst().equals(doublesGame2) || x.getDoublesGameSecond().equals(doublesGame2));
 
     }
@@ -206,7 +261,7 @@ public class MatchService {
             stringBuffer.append("<tr><th>")
                     .append(matchGame.getDate()).append("</th>")
                     .append(displayRow(matchGame.getDoublesGameFirst(), count.getAndIncrement(), matchCount.get(), owner1.get()))
-                    .append(displayRow(matchGame.getDoublesGameSecond(), count.getAndIncrement(), matchCount.get(), owner2.get()))
+//                    .append(displayRow(matchGame.getDoublesGameSecond(), count.getAndIncrement(), matchCount.get(), owner2.get()))
                     .append("</tr>");
 
             matchCount.getAndIncrement();

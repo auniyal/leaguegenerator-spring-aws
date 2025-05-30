@@ -11,4 +11,5 @@ public class UserInput {
     private boolean full;
     private LocalDate startDate;
     private List<String> surface;
+    private int numberOfMatchesADay;
 }

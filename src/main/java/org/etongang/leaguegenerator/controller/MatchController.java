@@ -1,6 +1,6 @@
 package org.etongang.leaguegenerator.controller;
 
-import jakarta.ws.rs.POST;
+import lombok.extern.slf4j.Slf4j;
 import org.etongang.leaguegenerator.HtmlContent;
 import org.etongang.leaguegenerator.domain.DoublesGame;
 import org.etongang.leaguegenerator.domain.DoublesPair;
@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
-
+@Slf4j
 public class MatchController {
     final HtmlContent htmlContent;
     final MatchService matchService;
@@ -50,7 +50,8 @@ public class MatchController {
 
         List<MatchGame> matchGames = new ArrayList<>();
         if (full) {
-            matchGames = matchService.generateUniqueMatchDays(doublesMatches, startDate);
+            matchGames = matchService.generateUniqueMatchDays(doublesMatches, startDate, 2, 2);
+//            matchGames = matchService.generateUniqueMatchDays(doublesMatches, startDate);
         }
 
         return htmlContent.getHead() +
@@ -67,12 +68,16 @@ public class MatchController {
 
     }
 
-    @CrossOrigin(origins = "http://localhost:5173")
+    @CrossOrigin(origins = {
+            "http://localhost:5173",
+            "http://league-generator.s3-website.eu-west-2.amazonaws.com/",
+            "https://league-generator.s3-website.eu-west-2.amazonaws.com/"
+    })
     @PostMapping(value = "/v2/api/match/{numberOfPlayer}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public PlayerData generateMatches(@PathVariable int numberOfPlayer,
                                       @RequestBody UserInput userInput) {
-
+        log.info("generateMatches");
         List<String> players = userInput.getPlayers();
         Collections.shuffle(players);
         List<String> allPlayersList = new ArrayList<>(players);
@@ -88,7 +93,9 @@ public class MatchController {
         List<MatchGame> matchGames = new ArrayList<>();
         boolean isFull = userInput.isFull();
         if (isFull) {
-            matchGames = matchService.generateUniqueMatchDays(doublesMatches, userInput.getStartDate());
+//            matchGames = matchService.generateUniqueMatchDays(doublesMatches, userInput.getStartDate());
+            matchGames = matchService.generateUniqueMatchDays(doublesMatches, userInput.getStartDate()
+                    , userInput.getNumberOfMatchesADay(), userInput.getPlayers().size());
         }
         String surface1 = userInput.getSurface().stream().findFirst().get();
         String surface2 = userInput.getSurface().size() == 1 ? surface1 : userInput.getSurface().get(1);
@@ -97,11 +104,13 @@ public class MatchController {
         AtomicInteger atomicCount = new AtomicInteger(1);
         matchGames.forEach(matchGame -> {
                     playerData.getPlayerDataRows().add(getPlayerDataRow(matchGame.getDoublesGameFirst(), matchGame.getDate(), atomicInteger, (atomicCount.get() % 2 == 0) ? surface1 : surface2));
-                    playerData.getPlayerDataRows().add(getPlayerDataRow(matchGame.getDoublesGameSecond(), matchGame.getDate(), atomicInteger, (atomicCount.get() % 2 == 0) ? surface1 : surface2));
+                    if (matchGame.getDoublesGameSecond() != null) {
+                        playerData.getPlayerDataRows().add(getPlayerDataRow(matchGame.getDoublesGameSecond(), matchGame.getDate(), atomicInteger, (atomicCount.get() % 2 == 0) ? surface1 : surface2));
+                    }
                     atomicCount.getAndIncrement();
                 }
         );
-
+        log.info("generateMatches finished");
         // playerData.setValidation(matchService.validateGeneratedMatchesCounts(playersProvided, doublesMatches, allPlayersList));
         return playerData;
 
